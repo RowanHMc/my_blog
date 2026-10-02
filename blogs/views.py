@@ -40,7 +40,7 @@ def blogs(request):
     posts = Post.objects.all()
     return render(request, 'blogs.html',{"posts": posts})
 
-def blog_detail(request, post_id):
+def blog_detail(request, slug):
     # post = Post.objects.get(id=post_id)
-    post = get_object_or_404(Post, id=post_id)
+    post = get_object_or_404(Post, slug=slug)
     return render(request, "blog_detail.html", {"post": post})    

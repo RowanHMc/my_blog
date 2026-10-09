@@ -5,28 +5,28 @@ from django.urls import reverse
 from cloudinary.models import CloudinaryField
 
 # CREATE TABLE category (name, slug, description, created_at, updated_at)
-
 class Author(models.Model):
-    """Model Rep an author"""
+    """Model representing an author"""
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.CharField(max_length=100)
-
+    
     def get_absolute_url(self):
         return reverse("author_detail", args=[str(self.id)])
-
+    
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
-
+    
+    
 class Category(models.Model):
     name = models.CharField(
         max_length=100,
-        # unique=True
+        unique=True
     )
 
     slug = models.SlugField(
         max_length=100,
-        # unique=True,
+        unique=True,
         blank=True
     )
 
@@ -60,7 +60,7 @@ class Post(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Draft"
-        PUBLISHED = "PUBLISHED", "Published" # to make visible to users
+        PUBLISHED = "PUBLISHED", "Published"
 
     # Author
     user = models.ForeignKey(
@@ -85,7 +85,7 @@ class Post(models.Model):
 
     slug = models.SlugField(
         max_length=255,
-        # unique=True,
+        unique=True,
         blank=True
     )
 
@@ -95,8 +95,8 @@ class Post(models.Model):
     )
 
     content = models.TextField()
-
-    image = CloudinaryField('image', null=True)
+    
+    image = CloudinaryField("image", null=True)
 
     # Publication
     status = models.CharField(
@@ -141,11 +141,10 @@ class Post(models.Model):
         ordering = ["-created_at"]
         verbose_name = "Post"
         verbose_name_plural = "Posts"
-
-
+        
 class Subscriber(models.Model):
     email = models.EmailField(unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
-        return self.email
+        return self.email        

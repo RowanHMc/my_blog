@@ -15,6 +15,7 @@ from decouple import config
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +30,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = config('DEBUG', default=False, cast=bool)
 DEBUG =True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
 
 
 # Application definition
@@ -44,7 +45,44 @@ INSTALLED_APPS = [
     'blogs',
     'school',
     'cloudinary',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
+    
+
+    # Two-factor authentication
+    "two_factor",
+    'rest_framework',
+    
+
 ]
+
+# ACCOUNT_EMAIL_REQUIRED =True
+# ACCOUNT_AUTHENTICATION_METHOD= 'email'
+# SOCIALACCOUNT_PROVIDERS= {
+#     'google': {
+#         'SCOPE':[
+#             'profile',
+#             'email'
+#         ],
+#         'AUTH_PARAMS':[
+#             'access_type':'online'
+#         ],
+    
+#     }
+# }
+
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = 'login'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACKS = 'bootstrap5'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -54,7 +92,48 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middlewear.AccountMiddleware',
+
 ]
+
+MIDDLEWARE += [
+    "django_otp.middleware.OTPMiddleware",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', default='')
+GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET', default='')
+SOCIALACCOUNT_PROVIDERS = {}
+if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+    SOCIALACCOUNT_PROVIDERS['google'] = {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'prompt': 'select_account'},
+        'APP': {
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
+            'key': '',
+        },
+    }
+SITE_ID = config('SITE_ID', default=1, cast=int)
+
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_LOGOUT_ON_GET = False
+ACCOUNT_ADAPTER = 'blogs.adapters.SiteAccountAdapter'
+LOGIN_URL = 'account_login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+ACCOUNT_LOGOUT_REDIRECT_URL = 'home'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+OTP_LOGIN_URL = 'two_factor:login'
 
 ROOT_URLCONF = 'my_blog.urls'
 
@@ -63,6 +142,16 @@ cloudinary.config (
     api_secret = config('CLOUDINARY_API_SECRET'),
     cloud_name = config('CLOUDINARY_CLOUD_NAME')
 )
+
+
+REST_FRAMEWORK={
+    'DEFAULT_AUTHENTICATION_CLASS':[
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.isAuthenticated',
+    ]
+}
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -91,9 +180,23 @@ WSGI_APPLICATION = 'my_blog.wsgi.application'
 #     }
 # }
 
-DATABASES = {
+
+
+DATABASE_URL=config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    DATABASES={
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=not config('DEBUG', default=False, cast=bool),
+        )
+    }
+
+else:
+    DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE':'django.db.backends.postgresql',
         'NAME': config('NAME'),
         'USER' : config('USER'),
         'PASSWORD': config('PASSWORD'),
@@ -141,6 +244,8 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+STATIC_ROOT = 'blogs/static'
 
 
 # Email
